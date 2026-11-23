@@ -6,6 +6,16 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 
+def print_usage(usage) -> None:
+    if usage is None:
+        print('The provider did not return token statistics')
+        return
+
+    print(f'Input Tokens: {usage.prompt_tokens}')
+    print(f'Output Tokens: {usage.completion_tokens}')
+    print(f'Total Tokens: {usage.total_tokens}')
+
+
 def summarize_request(client: OpenAI, user_text: str) -> None:
     text = user_text.strip()
     if not text:
@@ -63,12 +73,7 @@ def summarize_request(client: OpenAI, user_text: str) -> None:
         print(f'Model: {response.model}')
         print(f'Finish Reason: {choice.finish_reason}')
         print(f'Time: {elapsed_seconds:.2f} seconds')
-        if response.usage:
-            print(f'Input Tokens: {response.usage.prompt_tokens}')
-            print(f'Output Tokens: {response.usage.completion_tokens}')
-            print(f'Total Tokens: {response.usage.total_tokens}')
-        else:
-            print('The provider did not return token statistics')
+        print_usage(response.usage)
 
 
 def main() -> None:
@@ -81,37 +86,8 @@ def main() -> None:
             'Check .env file in root project.'
         )
     client = OpenAI(api_key=token)
-    user_text = input('Enter yor text message...')
+    user_text = input('Enter yor text message...\n')
     summarize_request(client, user_text)
-
-
-# def main() -> None:
-#     load_dotenv()
-#
-#     token = os.getenv("GEMINI_API_KEY")
-#     if not token:
-#         raise SystemExit(
-#             'Environment variable "GEMINI_API_KEY" is not found. '
-#             'Check .env file in root project.'
-#         )
-#     client = genai.Client(api_key=token)
-#     interaction = client.interactions.create(
-#         model='gemini-4-hydrogen',
-#         input='Resume in short: The client paid for the same order twice.'
-#     )
-#
-#     print('Result: ')
-#     print(interaction.output_text)
-#
-#     print('\nStatistics:')
-#     print(f'Response ID: {interaction.id}')
-#     print(f'Model: {interaction.model}')
-#     if interaction.usage:
-#         print(f'Input Tokens: {interaction.usage.initial_input_tokens}')
-#         print(f'Output Tokens: {interaction.usage.total_output_tokens}')
-#         print(f'Total Tokens: {interaction.usage.total_tokens}')
-#     else:
-#         print('The provider did not return token statistics')
 
 
 if __name__ == "__main__":
