@@ -5,6 +5,15 @@ import openai
 from dotenv import load_dotenv
 from openai import OpenAI
 
+SYSTEM_INSTRUCTION = (
+    'You are assisting a customer support agent. '
+    'Briefly summarize the message in a single sentence. '
+    'Use only facts from the message. '
+    'Do not invent amounts, dates, reasons, or actions. '
+    'If there isn\'t enough data, state this directly.'
+    'Reply in the language of the user\'s message.'
+)
+
 
 def print_usage(usage) -> None:
     if usage is None:
@@ -14,6 +23,20 @@ def print_usage(usage) -> None:
     print(f'Input Tokens: {usage.prompt_tokens}')
     print(f'Output Tokens: {usage.completion_tokens}')
     print(f'Total Tokens: {usage.total_tokens}')
+
+
+def build_messages(user_text: str) -> list[dict[str, str]]:
+    messages = [
+        {
+            'role': 'system',
+            'content': SYSTEM_INSTRUCTION
+        },
+        {
+            'role': 'user',
+            'content': f'Message: {user_text}'
+        }
+    ]
+    return messages
 
 
 def summarize_request(client: OpenAI, user_text: str) -> None:
@@ -27,15 +50,7 @@ def summarize_request(client: OpenAI, user_text: str) -> None:
     try:
         response = client.chat.completions.create(
             model=os.getenv('MODEL'),
-            messages=[
-                {
-                    'role': 'user',
-                    'content': 'Summarize the content of the message in '
-                               'a single sentence. Do not include any facts '
-                               'that are not present in the text.\n\n'
-                               f'Message: {text}'
-                }
-            ]
+            messages=build_messages(text)
         )
     except openai.AuthenticationError:
         print('Authorization error. Check API Key is available.')
@@ -51,10 +66,7 @@ def summarize_request(client: OpenAI, user_text: str) -> None:
     except openai.APIConnectionError:
         print('Connection error. Check the network.')
     except openai.APIStatusError as e:
-        if e.status_code == 429:
-            print('Credit balance exhausted or organization limit exceeded.')
-        else:
-            print(f'The API returned an error with a status {e.status_code}')
+        print(f'The API returned an error with a status {e.status_code}')
         if e.request_id:
             print(f'Request ID: {e.request_id}')
     except openai.APIError as e:
@@ -86,7 +98,7 @@ def main() -> None:
             'Check .env file in root project.'
         )
     client = OpenAI(api_key=token)
-    user_text = input('Enter yor text message...\n')
+    user_text = input('Enter your text message...\n')
     summarize_request(client, user_text)
 
 
