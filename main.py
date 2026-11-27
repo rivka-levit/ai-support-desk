@@ -5,6 +5,9 @@ import openai
 from dotenv import load_dotenv
 from openai import OpenAI
 
+TEMPERATURE = 0.2
+MAX_OUTPUT_TOKENS = 80
+
 SYSTEM_INSTRUCTION = (
     'You are assisting a customer support agent. '
     'Briefly summarize the message in a single sentence. '
@@ -50,7 +53,10 @@ def summarize_request(client: OpenAI, user_text: str) -> None:
     try:
         response = client.chat.completions.create(
             model=os.getenv('MODEL'),
-            messages=build_messages(text)
+            messages=build_messages(text),
+            temperature=TEMPERATURE,
+            reasoning_effort="none",  # for gpt-6-luna
+            max_completion_tokens=MAX_OUTPUT_TOKENS
         )
     except openai.AuthenticationError:
         print('Authorization error. Check API Key is available.')
